@@ -6,25 +6,18 @@
 <table>
     <caption> Table of Employees</caption>
     <tr>
-        {% for header in headerColumns %}
+        {% for header in tableKeys %}
         <th>
             {{header}}
         </th>
         {% endfor %}
     </tr>
     <tr>
+        {% for key in tableKeys %}
         <td>
-            {{employeeID}}
+            {{employeeData[key]}}
         </td>
-        <td>
-            {{employeeData[0]}}
-        </td>
-        <td>
-            {{employeeData[1]}}
-        </td>
-        <td>
-            {{departmentName}}
-        </td>
+        {% endfor %}
     </tr>
 </table>
 {% endif %}

@@ -12,88 +12,105 @@ class Form:
     form = ""
 
 class TableColumns:
-    
+    # Creating a few objects to track updates to the SQL Schema
     tables = ["employee","department"]
-    combinedColumns = ["employee_id","name","department_id","name"]
+    combinedColumns = ["employee_id","name","department_id","department_name"]
     employeeColumns = ["employee_id","name","department_id"]
-    departmentColumns = ["department_id","name"]
+    departmentColumns = ["department_id","department_name"]
 
-# Completed and Debugged
+# Done & Commented.
+# By using Flask, we track the method of arrival at this webpage. This is used by various functions.
 @app.route("/", methods=["GET","POST"])
 def lookup():
-    # A few parameters to get going
+    # Putting our Forms into variables.
     selectionform = SelectionForm()
     noform = NoForm()
     yesform = YesForm()
+    # This allows for SQL queries into our Database
     db = get_db()
+    # Required for Jinja and creating the webpage.
     selection = ""
     success = ""
     error = ""
-    # If the NoForm validates, it comes here
+    # After Posting the NoForm, if it validates then we come here.
     if noform.validate_on_submit():
         employeeID = noform.employeeID.data
         employeeSQL = {}
-        departmentSQL = {}
-        # This for loop goes through the available columns and grabs all the data using the employee_id - This works as employee_id cannot be dropped.
+        # This for loop goes through SQL schema and obtains data for each column using the employee_id - This works as employee_id cannot be dropped.
         for column in TableColumns.employeeColumns:
             employeeData = db.execute("""SELECT %s FROM employee WHERE employee_id = ?;""" %column,(employeeID,)).fetchone()
-            if employeeData != None:
-                employeeSQL[column] = employeeData[0]
-        if employeeData == None:
-            success = "There is no employee with this employee ID"
-            return render_template("index.html", form=noform, success=success, employeeData=employeeData, departmentData=None, error=error, selection="Search an Employee",headerColumns=TableColumns.combinedColumns)
-        
-        # This loop wants to go through the keys e.g. columns from the employee columns and checks if department_id exists and gets that name. 
-        for keys_values in employeeSQL.items():
-            if keys_values[0] == "department_id":
-                departmentData = db.execute("""SELECT * FROM department WHERE %s = ?;""" % keys_values[0],(keys_values[1],)).fetchone()
-        if departmentData != None:
-            departmentSQL = dict(zip(TableColumns.departmentColumns,departmentData))
-        if departmentSQL == {}:
-            departmentName = "NULL"
-        if 'name' in departmentSQL.keys():
-            departmentName = departmentSQL["name"]
+            # If the employee number is not in our Database. Render the same template but with an error message.
+            if employeeData == None:
+                success = "There is no employee with this employee ID"
+                return render_template("index.html", form=noform, success=success, employeeData=employeeData, departmentData=None, error=error, selection="Search an Employee",tableKeys=TableColumns.combinedColumns)
+            # Creating a dictionary with Keys == SQL Column names and Values == Data held in those columns.
+            employeeSQL[column] = employeeData[0]
+        # Checking our values from our SQL to convert any None to NULL.
+        for value in employeeSQL.items():
+            if value[1] == None:
+                employeeSQL[value[0]] = "NULL"
+        # Checking if we have a department_id, if true, check the database for its value. if False, assign to NULL
+        if employeeSQL["department_id"] != "NULL":
+            departmentName = db.execute("""SELECT department_name FROM department WHERE department_id = ?;""",(employeeSQL["department_id"],)).fetchone()
+            # If the department_id does not have a name. Assign it to NULL
+            if departmentName == None:
+                departmentName = "NULL"
+            else:
+                departmentName = departmentName[0]
         else:
             departmentName = "NULL"
-
+        # Add that value to our dictionary. Department Name cannot be dropped, so this can stay hardcoded.
+        employeeSQL["department_name"] = departmentName
+        tableKeys = employeeSQL.keys()
         success = "Success, here is your employee and their department."
-        return render_template("index.html", form=noform, success=success, employeeID=employeeID, employeeData=employeeData,departmentName=departmentName, error=error, selection="Search an Employee",headerColumns=TableColumns.combinedColumns)
+        return render_template("index.html", form=noform, success=success, tableKeys=tableKeys, employeeData=employeeSQL,error=error, selection="Search an Employee",headerColumns=TableColumns.combinedColumns)
     
-    # If the YesForm validates, it comes here
+    # After Posting the YesForm, if it validates then we come here.
     if yesform.validate_on_submit():
         employeeName = yesform.employeeName.data
         departmentID = yesform.departmentID.data
+        employeeSQL = {}
+        # If only supplied the employee name and no department id. We add it to database. 
         if departmentID == "" and employeeName != None:
             db.execute(""" INSERT INTO employee (name) VALUES (?);""",(employeeName,))
             db.commit()
-            employeeData = db.execute("""SELECT employee_id,name,department_id FROM employee WHERE name = ? AND department_id IS NULL;""",(employeeName,)).fetchone()
-            employeeID = employeeData[0]
-            employeeData = [employeeData[1],"NULL"]
-            departmentData = ["NULL"]
+            # Same loop as above. Same checks as well.
+            for column in TableColumns.employeeColumns:
+                employeeData = db.execute("""SELECT %s FROM employee WHERE name = ? AND department_id IS NULL;""" %column,(employeeName,)).fetchone()
+                employeeSQL[column] = employeeData[0]
+            for value in employeeSQL.items():
+                if value[1] == None:
+                    employeeSQL[value[0]] = "NULL"
+            employeeSQL["department_name"] = "NULL"
+        # If department ID is provided. We come here.
         else:
+            # Checks if department ID is a positive number. If not, renders the form with an error message.
             try:
                 departmentID = int(departmentID)
                 if departmentID < 0:
                     error = 10/0
             except:
                 error = "The Department ID needs to be a positive number. No negative numbers or Words accepted"
-                employeeID = ""
                 employeeData = ""
-                departmentData = ""
-                return render_template("index.html",form=yesform,success=success,employeeID=employeeID,employeeData=employeeData,departmentData=departmentData,error=error,selection="Add an Employee",headerColumns=TableColumns.combinedColumns)
-
+                return render_template("index.html",form=yesform,success=success,employeeData=employeeData,error=error,selection="Add an Employee",tableKeys=TableColumns.combinedColumns)
+            # Insert employee into our database with name and department ID.
             db.execute(""" INSERT INTO employee (name,department_id)
                                             VALUES (?,?);""",(employeeName,departmentID))
             db.commit()
-            employeeData = db.execute("""SELECT employee_id,name,department_id FROM employee WHERE name = ? AND department_id = ?;""",(employeeName,departmentID)).fetchone()
-            employeeID = employeeData[0]
-            employeeData = [employeeData[1],employeeData[2]]
-            departmentData = db.execute("""SELECT name FROM department WHERE department_id = ?;""",(employeeData[1],)).fetchone()
+            # Same method as before, checking each column for data, adding it to a dictionary. Passing that dictionary to Jinja to create our HTML.
+            for column in TableColumns.employeeColumns:
+                employeeData = db.execute("""SELECT %s FROM employee WHERE name = ? AND department_id = ?;""" %column,(employeeName,departmentID)).fetchone()
+                employeeSQL[column] = employeeData[0]
+            for value in employeeSQL.items():
+                if value[1] == None:
+                    employeeSQL[value[0]] = "NULL"            
+            departmentData = db.execute("""SELECT department_name FROM department WHERE department_id = ?;""",(employeeSQL["department_id"],)).fetchone()
             if departmentData == None:
-                departmentData = ["Null"]
-        
+                employeeSQL["department_name"] = ["Null"]
+            else:
+                employeeSQL["department_name"] = departmentData[0]
         success = "Success, the employee has been added"
-        return render_template("index.html",form=yesform,success=success,employeeID=employeeID,employeeData=employeeData,departmentData=departmentData,error=error,headerColumns=TableColumns.combinedColumns)
+        return render_template("index.html",form=yesform,success=success,employeeData=employeeSQL,error=error,tableKeys=TableColumns.combinedColumns)
     
     # If NoForm & YesForm fail to validate - This only occurs after the selection is posted
     if (selectionform.validate_on_submit()):
@@ -113,6 +130,7 @@ def lookup():
 
         # By using the Form.form variable. We can check which form is in use to return the correct error message.
         if type(Form.form) == type(noform):
+            # If the field are empty. Error message is sent.
             if noform.employeeID.data == None:
                 employeeData = ""
                 departmentData = ""
@@ -120,6 +138,7 @@ def lookup():
                 success = ""
                 error = "Please Fill in the Required Field"
                 return render_template("index.html",form=noform,success=success,employeeData=employeeData,departmentData=departmentData,selection=selection,error=error)
+            # Otherwise, an negative number has been put in. Flask disables any other characters. An error message is sent.
             else:
                 employeeData = ""
                 departmentData = ""
@@ -128,8 +147,9 @@ def lookup():
                 error = "Please enter a valid Employee ID, no numbers equal or less than 0, or Non-Numerical Characters"
                 return render_template("index.html",form=noform,success=success,employeeData=employeeData,departmentData=departmentData,selection=selection,error=error)
 
-        # Check which form is in use.
+        # By using the Form.form variable. We can check the form in use.
         if type(Form.form) == type(yesform):
+            # If this field is left empty. Render back the form with an error message.
             if yesform.employeeName.data == "":
                     employeeData = ""
                     departmentData = ""
@@ -177,7 +197,7 @@ def table_mod():
     if delForm.validate_on_submit():
         tableChoice = delForm.selectionTable.data.lower()
         columnName = delForm.delMod.data.lower()
-        if columnName == "name":
+        if columnName == "name" or columnName == "department_name":
             success = "You cannot remove this column."
             return render_template("table_mod.html",form=delForm,success=success,tables=TableColumns.tables,employeeColumns=TableColumns.employeeColumns,departmentColumns=TableColumns.departmentColumns, selection = "Remove a Column")
         try:
@@ -186,12 +206,14 @@ def table_mod():
         except:
             success = "There was a SQL error. Please contact IT."
             return render_template("table_mod.html",form=delForm,success=success,tables=TableColumns.tables,employeeColumns=TableColumns.employeeColumns,departmentColumns=TableColumns.departmentColumns, selection = "Remove a Column")
-            
-        if tableChoice == "employee":
-            TableColumns.employeeColumns.remove(columnName.lower())
-        else:
-            TableColumns.departmentColumns.remove(columnName.lower())
-        TableColumns.combinedColumns.remove(columnName.lower())
+        try:
+            if tableChoice == "employee":
+                TableColumns.employeeColumns.remove(columnName.lower())
+            else:
+                TableColumns.departmentColumns.remove(columnName.lower())
+            TableColumns.combinedColumns.remove(columnName.lower())
+        except:
+            a = ""
         success = "Column has been removed"
         return render_template("table_mod.html",form=delForm,success=success,tables=TableColumns.tables,employeeColumns=TableColumns.employeeColumns,departmentColumns=TableColumns.departmentColumns, selection = "Remove a Column")
     
@@ -247,7 +269,7 @@ def delete():
             db.commit()
             success = "Department (ID: %s) Removed from Database" % removeDepartment
         except:
-            db.execute("""DELETE FROM department WHERE name = ?;""",(removeDepartment,))
+            db.execute("""DELETE FROM department WHERE department_name = ?;""",(removeDepartment,))
             db.commit()
             success = "Department %s Removed from Database" % removeDepartment
         return render_template("delete.html",form=departForm,success=success,selection="Remove a Department")

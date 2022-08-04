@@ -12,7 +12,7 @@ create TABLE employee
 CREATE TABLE department
 (
     department_id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL
+    department_name TEXT NOT NULL
 );
 
 INSERT INTO employee values
