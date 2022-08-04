@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block main_content %}
+{% if selection == "Add a Column" %}
+<h1>Add a new Column</h1>
+{% endif %}
+{% if selection == "Remove a Column" %}
+<h1>Remove a Column</h1>
+{% endif %}
+<table>
+    <caption> Columns of {{tables[0]}} Table</caption>
+    <tr>
+    {% for column in employeeColumns %}
+        <th>{{column}}</th>
+    {% endfor %}
+    </tr>
+</table>
+<table>
+    <caption>Columns of {{tables[1]}} Table</caption>
+    <tr>
+    {% for column in departmentColumns %}
+        <th>{{column}}</th>
+    {% endfor %}
+    </tr>
+</table>
+
+<form action = "" method = "POST" novalidate>
+    {{form.hidden_tag()}}
+    {% if selection == "" %}
+        {{form.selectionMod.label}}
+        {{form.selectionMod()}}
+    <br/>
+    {% endif %}
+    {% if selection == "Add a Column" %}
+        {{form.selectionTable.label}}
+        {{form.selectionTable()}}
+    <br/>
+        {{form.addSelect.label}}
+        {{form.addSelect()}}
+    <br/>
+        {{form.addMod.label}}
+        {{form.addMod()}}
+    <br/>
+    {% endif %}
+    {% if selection == "Remove a Column" %}
+        {{form.selectionTable.label}}
+        {{form.selectionTable()}}
+    <br/>        
+        {{form.delMod.label}}
+        {{form.delMod()}}
+    <br/>
+    {% endif %}
+    {{form.submit()}}
+</form>
+
+<p>{{success}}</p>
+
+{% endblock %}

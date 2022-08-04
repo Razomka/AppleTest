@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Apple Interview</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+    <nav>
+    </nav>
+    <main>
+    {% block main_content %}
+    {% endblock %}
+    </main>
+<footer>
+    <p><a href="{{ url_for('lookup') }}">Webpage for Selecting or Adding an Employee</a></p>
+    <p><a href ="{{url_for('table_mod')}}">Webpage for Updating the SQL columns</a></p>
+    <p><a href ="{{url_for('delete')}}">Webpage for Removing SQL Data</a></p>
+</footer>
+</body>
+</html>

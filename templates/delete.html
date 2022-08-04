@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block main_content %}
+
+<form action = "" method = "POST" novalidate>
+    {{form.hidden_tag()}}
+    {% if selection == "" %}
+        {{form.selection.label}}
+        {{form.selection()}}
+    <br/>
+    {% endif %}
+    {% if selection == "Remove an Employee" %}
+        {{form.deleteEmployee.label}}
+        {{form.deleteEmployee()}}
+    <br/>
+    {% endif %}
+    {% if selection == "Remove a Department" %}
+        {{form.deleteDepartment.label}}
+        {{form.deleteDepartment()}}
+    <br/>        
+    {% endif %}
+    {{form.submit()}}
+</form>
+
+<p>{{success}}</p>
+
+{% endblock %}

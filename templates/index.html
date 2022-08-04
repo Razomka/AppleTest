@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block main_content %}
+
+{% if success != "" %}
+<table>
+    <caption> Table of Employees</caption>
+    <tr>
+        {% for header in headerColumns %}
+        <th>
+            {{header}}
+        </th>
+        {% endfor %}
+    </tr>
+    <tr>
+        <td>
+            {{employeeID}}
+        </td>
+        <td>
+            {{employeeData[0]}}
+        </td>
+        <td>
+            {{employeeData[1]}}
+        </td>
+        <td>
+            {{departmentName}}
+        </td>
+    </tr>
+</table>
+{% endif %}
+<br/>
+<form action ="" method="POST" novalidate>
+    {{form.hidden_tag()}}
+    {% if selection == "" %}
+        {{form.selection.label}}
+        {{form.selection()}}
+    {% endif %}
+    <br/>
+    {% if selection == "Search an Employee" %}
+    <p>Please type in the Employee Number and hit submit.</p>
+    <p>* = Required</p>
+        {{form.employeeID.label}}
+        {{form.employeeID()}}
+    {% endif %}
+    {% if selection == "Add an Employee" %}
+    <p>When adding a new employee, the employee ID will auto-increment.</p>
+    <p>If the department ID is not added then the ID & Department Name will default to NULL.</p>
+        {{form.employeeName.label}}
+        {{form.employeeName()}}
+    <br/>
+        {{form.departmentID.label}}
+        {{form.departmentID()}}
+    {% endif %}
+    <br/>
+        {{form.submit()}}
+</form>
+
+<p>{{success}}</p>
+<p>{{error}}</p>
+
+{% endblock %}
