@@ -1,0 +1,32 @@
+:root{
+    --colour-bgcolour:#f7f0e9 ;
+    --header-colour: rgb(90, 150, 120);
+    --text-colour: black;
+    --root-background-color:#e0d8cc;
+    --banner-background-color:rgb(46, 70, 58);
+    background-color:var(--root-background-color);
+    font-size: 20px;
+    font-family: Montserrat, Pacifico-Regular Arial, Franklin Gothic Medium, Arial, sans-serif;
+}
+
+body {
+    background-color: white;
+    width: 80%;
+    margin: 1em auto;
+    border-radius: 1em;
+    padding: 1em;
+}
+
+
+
+table {
+    width: 100%;
+    border: 3px solid black;
+    padding: 1rem;
+    text-align: center;
+    margin-bottom: 1em;
+}
+
+th{
+   border: 1px solid black; 
+}

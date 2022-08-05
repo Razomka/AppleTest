@@ -106,7 +106,7 @@ def lookup():
                     employeeSQL[value[0]] = "NULL"            
             departmentData = db.execute("""SELECT department_name FROM department WHERE department_id = ?;""",(employeeSQL["department_id"],)).fetchone()
             if departmentData == None:
-                employeeSQL["department_name"] = ["Null"]
+                employeeSQL["department_name"] = "Null"
             else:
                 employeeSQL["department_name"] = departmentData[0]
         success = "Success, the employee has been added"
@@ -249,7 +249,6 @@ def delete():
     selection = ""
     success = ""
     if employForm.validate_on_submit():
-        print("Employee Validation")
         removeEmployee = employForm.deleteEmployee.data
         if removeEmployee < 0:
             success = "Error, Please do not use Negative Numbers"
@@ -261,21 +260,26 @@ def delete():
         return render_template("delete.html",form=employForm,success=success,selection="Remove an Employee")
 
     if departForm.validate_on_submit():
-        print("Department Validation")
         removeDepartment = departForm.deleteDepartment.data.capitalize()
         try:
-            removeDepartment = int(removeDepartment)
+            checkSQL = db.execute("""SELECT * FROM department WHERE department_id = ?;""",(removeDepartment,)).fetchone()
+            if checkSQL == None:
+                success = "There is no Department with this ID."
+                return render_template("delete.html",form=departForm,success=success,selection="Remove a Department")
             db.execute("""DELETE FROM department WHERE department_id = ?;""",(removeDepartment,))
             db.commit()
             success = "Department (ID: %s) Removed from Database" % removeDepartment
         except:
+            checkSQL = db.execute("""SELECT department_id FROM department WHERE department_name = ?;""",(removeDepartment,)).fetchone()
+            if checkSQL == None:
+                success = "There is no Department with this name."
+                return render_template("delete.html",form=departForm,success=success,selection="Remove a Department")
             db.execute("""DELETE FROM department WHERE department_name = ?;""",(removeDepartment,))
             db.commit()
             success = "Department %s Removed from Database" % removeDepartment
         return render_template("delete.html",form=departForm,success=success,selection="Remove a Department")
     
     if selform.validate_on_submit():
-        print("Selection Validation")
         selection = selform.selection.data
         if "Employee" in selection:
             Form.form = employForm
@@ -286,14 +290,12 @@ def delete():
     
     # If POST method and no forms are validated then this screens for errors
     if request.method == "POST":
-        print("No validation")
         if type(Form.form) == type(employForm): 
             success = "Please enter an Employee ID"
             return render_template("delete.html",form=employForm,success=success,selection="Remove an Employee")
         if type(Form.form) == type(departForm): 
-            success = "Please enter a Department ID"
+            success = "Please enter a Department ID or Department Name"
             return render_template("delete.html",form=departForm,success=success,selection="Remove a Department")
     
-    print("Default")
     return render_template("delete.html",form=selform,success=success,selection=selection)
 

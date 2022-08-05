@@ -2,6 +2,16 @@
 
 {% block main_content %}
 
+{% if selection == "" %}
+<h1> Pick a Process</h1>
+{% endif %}
+{% if selection == "Remove an Employee" %}
+<h1> Remove an Employee</h1>
+{% endif %}
+{% if selection == "Remove a Department" %}
+<h1> Remove a Department</h1>
+{% endif %}
+
 <form action = "" method = "POST" novalidate>
     {{form.hidden_tag()}}
     {% if selection == "" %}

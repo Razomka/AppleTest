@@ -4,3 +4,7 @@ newDict = dict(zip(newList2,newList))
 
 print(newDict)
 
+
+text = "Engi"
+text = int(text)
+print(text)

@@ -2,6 +2,16 @@
 
 {% block main_content %}
 
+{% if selection == "" %}
+<h1> Pick a Process</h1>
+{% endif %}
+{% if selection == "Search an Employee" %}
+<h1> Search an Employee</h1>
+{% endif %}
+{% if selection == "Add an Employee" %}
+<h1> Add An Employee</h1>
+{% endif %}
+
 {% if success != "" %}
 <table>
     <caption> Table of Employees</caption>

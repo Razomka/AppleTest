@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 
 {% block main_content %}
+
+{% if selection == "" %}
+<h1> Pick a Column Process</h1>
+{% endif %}
 {% if selection == "Add a Column" %}
 <h1>Add a new Column</h1>
 {% endif %}
