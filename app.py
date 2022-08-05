@@ -18,7 +18,6 @@ class TableColumns:
     employeeColumns = ["employee_id","name","department_id"]
     departmentColumns = ["department_id","department_name"]
 
-# Done & Commented.
 # By using Flask, we track the method of arrival at this webpage. This is used by various functions.
 @app.route("/", methods=["GET","POST"])
 def lookup():
@@ -162,11 +161,10 @@ def lookup():
     return render_template("index.html",form=selectionform,success=success,selection=selection,error=error)
 
 
-# Nearly Complete
 @app.route("/table_mod", methods=["GET","POST"])
 def table_mod():
 
-    # Grabbing my forms and other parameters
+    # Setting a few variables. Getting the Forms.
     selForm = ModSelectForm()
     addForm = AddModForm()
     delForm = DelModForm()
@@ -179,12 +177,14 @@ def table_mod():
         tableChoice = addForm.selectionTable.data.lower()
         datatype = addForm.addSelect.data
         columnName = addForm.addMod.data.lower()
+        # This attemps to Alter the choosen table. If it encounters an SQL message, it renders the form with an error message.
         try:
             db.execute("""ALTER TABLE %s ADD %s %s;""" % (tableChoice,columnName,datatype))
             db.commit()
         except:
             success = "There was a SQL error. Please contact IT."
             return render_template("table_mod.html",form=addForm,success=success,tables=TableColumns.tables,employeeColumns=TableColumns.employeeColumns,departmentColumns=TableColumns.departmentColumns, selection = "Add a Column")
+        # This tracks our SQL Schema. If we add a column, it gets added to our TableColumns.Variable.
         if tableChoice == "employee":
             TableColumns.employeeColumns.append(columnName.lower())
         else:
@@ -197,15 +197,18 @@ def table_mod():
     if delForm.validate_on_submit():
         tableChoice = delForm.selectionTable.data.lower()
         columnName = delForm.delMod.data.lower()
+        # This blocks the removal of our Employee.Name column and Department.department_name columns. Renders the form back with an error message.
         if columnName == "name" or columnName == "department_name":
             success = "You cannot remove this column."
             return render_template("table_mod.html",form=delForm,success=success,tables=TableColumns.tables,employeeColumns=TableColumns.employeeColumns,departmentColumns=TableColumns.departmentColumns, selection = "Remove a Column")
+        # Stops any SQL crashes. 
         try:
             db.execute("""ALTER TABLE %s DROP COLUMN %s;""" % (tableChoice,columnName))
             db.commit()
         except:
             success = "There was a SQL error. Please contact IT."
             return render_template("table_mod.html",form=delForm,success=success,tables=TableColumns.tables,employeeColumns=TableColumns.employeeColumns,departmentColumns=TableColumns.departmentColumns, selection = "Remove a Column")
+        # This Try/Expect is only for a specific error that wouldn't occur during normal use. 
         try:
             if tableChoice == "employee":
                 TableColumns.employeeColumns.remove(columnName.lower())
@@ -220,6 +223,7 @@ def table_mod():
     # Comes here after the selection has been picked
     if selForm.validate_on_submit():
         modSelect = selForm.selectionMod.data
+        # Renders the correct form depending on the Selection Data.
         if "Add" in modSelect:
             Form.form = addForm
             return render_template("table_mod.html",form=addForm,success=success,tables=TableColumns.tables,employeeColumns=TableColumns.employeeColumns,departmentColumns=TableColumns.departmentColumns,selection=modSelect)
@@ -239,21 +243,30 @@ def table_mod():
     # If the user arrives at this page with a GET request. Then this triggers and gives back the selection form.
     return render_template("table_mod.html",form=selForm,success=success,tables=TableColumns.tables,employeeColumns=TableColumns.employeeColumns,departmentColumns=TableColumns.departmentColumns, selection=selection)
 
-# In Progress
+
 @app.route("/delete", methods=["GET","POST"])
 def delete():
+    # Form Variables.
     selform = DelSelectForm()
     employForm = DelEmployForm()
     departForm = DelDepartForm()
     db = get_db()
     selection = ""
     success = ""
+    # If employForm is valid. The data is taken.
     if employForm.validate_on_submit():
         removeEmployee = employForm.deleteEmployee.data
+        # Blocks negative numbers. Renders Form with error messsage.
         if removeEmployee < 0:
             success = "Error, Please do not use Negative Numbers"
             return render_template("delete.html",form=employForm,success=success,selection="Remove an Employee")
         else:
+            # Checks if Employee ID is valid, if not, renders form with error message.
+            checkSQL = db.execute("""SELECT * FROM employee WHERE employee_id = ?;""",(removeEmployee,)).fetchone()
+            if checkSQL == None:
+                success = "There is No Employee with that ID."
+                return render_template("delete.html",form=employForm,success=success,selection="Remove an Employee")
+            # If Valid, Removes Employee for Database.
             db.execute("""DELETE FROM employee WHERE employee_id = ?; """,(removeEmployee,))
             db.commit()
             success = "Employee (Employee ID: %s) removed from Database" %removeEmployee
@@ -261,7 +274,9 @@ def delete():
 
     if departForm.validate_on_submit():
         removeDepartment = departForm.deleteDepartment.data.capitalize()
+        # This Try/Expect is if the input is Text or Integer. Casting String to Int will cause the exception.
         try:
+            removeDepartment = int(removeDepartment)
             checkSQL = db.execute("""SELECT * FROM department WHERE department_id = ?;""",(removeDepartment,)).fetchone()
             if checkSQL == None:
                 success = "There is no Department with this ID."
@@ -279,6 +294,7 @@ def delete():
             success = "Department %s Removed from Database" % removeDepartment
         return render_template("delete.html",form=departForm,success=success,selection="Remove a Department")
     
+    # Same Selection Catch as the previous Functions.
     if selform.validate_on_submit():
         selection = selform.selection.data
         if "Employee" in selection:
@@ -296,6 +312,6 @@ def delete():
         if type(Form.form) == type(departForm): 
             success = "Please enter a Department ID or Department Name"
             return render_template("delete.html",form=departForm,success=success,selection="Remove a Department")
-    
+    # Default - Arrives here with a GET request.
     return render_template("delete.html",form=selform,success=success,selection=selection)
 
